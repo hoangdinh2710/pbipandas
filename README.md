@@ -1,4 +1,7 @@
 # pbipandas
+![CI](https://github.com/hoangdinh2710/pbipandas/actions/workflows/ci.yml/badge.svg)
+[![PyPI](https://img.shields.io/pypi/v/pbipandas.svg)](https://pypi.org/project/pbipandas/)
+
 
 **pbipandas** is a lightweight Python client for the [Power BI REST API](https://learn.microsoft.com/en-us/rest/api/power-bi/) that helps you authenticate and retrieve data directly into **Pandas DataFrames**. This package helps to get metadata details for all items (including datasets, dataflows, reports, refresh logs, datasources) in all of your workspaces.
 
