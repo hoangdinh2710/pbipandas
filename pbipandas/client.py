@@ -1,20 +1,44 @@
 import requests
 import pandas as pd
 import ast
+from typing import Union
 
 
 class PowerBIClient:
     # Power BI Client Class
+    """
+    PowerBIClient handles authentication and API calls to the Power BI REST API.
+
+    Attributes:
+        tenant_id (str): Azure AD tenant ID.
+        client_id (str): App's client ID registered in Azure.
+        client_secret (str): App's client secret.
+        access_token (str): Access token retrieved using client credentials.
+    """
 
     # Init and get token
-    def __init__(self, tenant_id, client_id, client_secret):
+    def __init__(self, tenant_id: str, client_id: str, client_secret: str):
+        """
+        Initialize the client and retrieve an access token.
+
+        Args:
+            tenant_id (str): Azure AD tenant ID.
+            client_id (str): Client/application ID.
+            client_secret (str): Client/application secret.
+        """
         self.tenant_id = tenant_id
         self.client_id = client_id
         self.client_secret = client_secret
         self.access_token = self.get_token()
         self.base_url = "https://api.powerbi.com/v1.0/myorg/groups/"
 
-    def get_token(self):
+    def get_token(self) -> str:
+        """
+        Retrieve an OAuth2 access token for the Power BI REST API.
+
+        Returns:
+            str: The access token string.
+        """
         # Grab token
         header = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -36,16 +60,29 @@ class PowerBIClient:
         self.access_token = result.json()["access_token"]
         return self.access_token
 
-    def get_header(self):
-        # Define header
-        header = {
+    def get_header(self) -> dict:
+        """
+        Get the headers required for authenticated API calls.
+
+        Returns:
+            dict: Headers with content type and bearer token.
+        """
+        return {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",
         }
-        return header
 
-    # Other functions
-    def extract_connection_details(self, x):
+    # Helper functions
+    def extract_connection_details(self, x: Union[str, dict]) -> pd.Series:
+        """
+        Extract connection details from a stringified dictionary or a dictionary.
+
+        Args:
+            x (Union[str, dict]): The input value to extract connection details from.
+
+        Returns:
+            pd.Series: A series with connection details such as server, database, etc.
+        """
         try:
             if isinstance(x, str):
                 details = ast.literal_eval(x)
@@ -74,52 +111,80 @@ class PowerBIClient:
             )
 
     # Trigger actions
-    def refresh_dataflow(self, workspace_id, dataflow_id):
-        # Define URL
+    def refresh_dataflow(self, workspace_id: str, dataflow_id: str) -> None:
+        """
+        Trigger a refresh for a specific dataflow.
 
+        Args:
+            workspace_id (str): The Power BI workspace ID.
+            dataflow_id (str): The dataflow ID.
+        """
         url = f"{self.base_url}/{workspace_id}/dataflows/{dataflow_id}/refreshes"
-        # Send POST request
         result = requests.post(url, headers=self.get_header())
         if result.status_code == 200:
             print(f"Start refreshing dataflow {dataflow_id}")
         else:
-            # If failed to refresh dataflow, print error message
             print(
                 f"Failed to refresh dataflow {dataflow_id}. Status code: {result.status_code}"
             )
 
-    def refresh_dataset(self, workspace_id, dataset_id):
-        # Define URL
+    def refresh_dataset(self, workspace_id: str, dataset_id: str) -> None:
+        """
+        Trigger a refresh for a specific dataset.
+
+        Args:
+            workspace_id (str): The Power BI workspace ID.
+            dataset_id (str): The dataset ID.
+        """
         url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/refreshes"
-        # Send POST request
         result = requests.post(url, headers=self.get_header())
         if result.status_code == 202:
             print(f"Start refreshing dataset {dataset_id}")
         else:
-            # If failed to refresh dataset, print error message
             print(
                 f"Failed to refresh dataset {dataset_id}. Status code: {result.status_code}"
             )
 
     # Get data functions
-    def get_report_by_workspace(self, workspace_id):
-        # Define URL endpoint
+    def get_report_by_workspace(self, workspace_id: str) -> requests.Response:
+        """
+        Retrieve all reports from a specified Power BI workspace.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+
+        Returns:
+            requests.Response: The HTTP response containing report metadata.
+        """
         get_report_url = f"{self.base_url}/{workspace_id}/reports"
-        # Send API call to get data
         result = requests.get(url=get_report_url, headers=self.get_header())
         return result
 
-    def get_dataset_by_workspace(self, workspace_id):
-        # Define URL endpoint
+    def get_dataset_by_workspace(self, workspace_id: str) -> requests.Response:
+        """
+        Retrieve all datasets from a specified Power BI workspace.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+
+        Returns:
+            requests.Response: The HTTP response containing dataset metadata.
+        """
         get_dataset_url = f"{self.base_url}/{workspace_id}/datasets"
-        # Send API call to get data
         result = requests.get(url=get_dataset_url, headers=self.get_header())
         return result
 
-    def get_dataflow_by_workspace(self, workspace_id):
-        # Define URL endpoint
+    def get_dataflow_by_workspace(self, workspace_id: str) -> requests.Response:
+        """
+        Retrieve all dataflows from a specified Power BI workspace.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+
+        Returns:
+            requests.Response: The HTTP response containing dataflow metadata.
+        """
         get_dataflow_url = f"{self.base_url}/{workspace_id}/dataflows"
-        # Send API call to get data
         result = requests.get(url=get_dataflow_url, headers=self.get_header())
         return result
 
@@ -216,91 +281,130 @@ class PowerBIClient:
         return result
 
     # Get data in bulk
-    def get_all_workspaces(self):
+    def get_all_workspaces(self) -> pd.DataFrame:
         """
-        Get all workspaces from Power BI.
+        Retrieve all Power BI workspaces available to the authenticated user.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing workspace metadata with columns such as 'id' and 'name'.
         """
-        # Send API Request
         result = requests.get(url=self.base_url, headers=self.get_header())
-        # Convert to dataframe
         df_get_all_workspaces = pd.DataFrame.from_dict(
             result.json()["value"], orient="columns"
         )
         return df_get_all_workspaces
 
-    def get_all_dataflows(self):
+    def get_all_datasets(self) -> pd.DataFrame:
         """
-        Get all dataflows from Power BI.
+        Retrieve all datasets from all available Power BI workspaces.
+
+        This function loops through all workspaces accessible by the user and fetches dataset metadata
+        from each, combining them into a single DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing dataset metadata, enriched with workspace context.
         """
-        # Set workspace list
         df_get_all_workspaces = self.get_all_workspaces()
         workspace_id_list = df_get_all_workspaces["id"]
-        # Define an empty dataframe
-        df_get_all_dataflows = pd.DataFrame()
-        # Loop through workspace
+        df_get_all_datasets = pd.DataFrame()
+
         for workspace_id in workspace_id_list:
             try:
-                workspace_name = df_get_all_workspaces.query(
-                    'id == "{0}"'.format(workspace_id)
-                )["name"].iloc[0]
-                # Send API call to get data
-                result = self.get_dataflow_by_workspace(workspace_id)
-                # If result success then proceed:
+                workspace_name = df_get_all_workspaces.query(f'id == "{workspace_id}"')[
+                    "name"
+                ].iloc[0]
+                result = self.get_dataset_by_workspace(workspace_id)
                 if result.status_code == 200:
-                    # Create dataframe to store data
                     df = pd.DataFrame.from_dict(
                         result.json()["value"], orient="columns"
                     )
-                    # Add column
                     df["workspaceId"] = workspace_id
-                    # Add workspace name column
                     df["workspaceName"] = workspace_name
-                    # Convert all columns to string type (optional)
                     df = df.astype("str")
-                    # Append data
+                    df_get_all_datasets = pd.concat([df_get_all_datasets, df])
+            except Exception as e:
+                print(f"Error processing workspace {workspace_id}: {e}")
+                continue
+
+        return df_get_all_datasets
+
+    def get_all_dataflows(self) -> pd.DataFrame:
+        """
+        Retrieve all dataflows from all accessible Power BI workspaces.
+
+        This method loops through each workspace the user has access to and fetches all dataflows,
+        enriching the results with the associated workspace ID and name.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing dataflow metadata for each workspace,
+            with additional columns for 'workspaceId' and 'workspaceName'.
+        """
+        df_get_all_workspaces = self.get_all_workspaces()
+        workspace_id_list = df_get_all_workspaces["id"]
+        df_get_all_dataflows = pd.DataFrame()
+
+        for workspace_id in workspace_id_list:
+            try:
+                workspace_name = df_get_all_workspaces.query(f'id == "{workspace_id}"')[
+                    "name"
+                ].iloc[0]
+
+                result = self.get_dataflow_by_workspace(workspace_id)
+                if result.status_code == 200:
+                    df = pd.DataFrame.from_dict(
+                        result.json()["value"], orient="columns"
+                    )
+                    df["workspaceId"] = workspace_id
+                    df["workspaceName"] = workspace_name
+                    df = df.astype("str")
                     df_get_all_dataflows = pd.concat([df_get_all_dataflows, df])
             except Exception as e:
                 print(f"Error processing workspace {workspace_id}: {e}")
                 continue
+
         return df_get_all_dataflows
 
-    def get_all_reports(self):
+    def get_all_reports(self) -> pd.DataFrame:
         """
-        Get all reports from Power BI.
+        Retrieve all reports from all accessible Power BI workspaces.
+
+        This method iterates through each available workspace, fetches the reports, and
+        combines them into a single DataFrame. It adds the workspace name as a column for context.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing report metadata across all workspaces,
+            including a 'workspaceName' column.
         """
-        # Set workspace list
         df_get_all_workspaces = self.get_all_workspaces()
         workspace_id_list = df_get_all_workspaces["id"]
-        # Define an empty dataframe
         df_get_all_reports = pd.DataFrame()
-        # Loop through workspace
+
         for workspace_id in workspace_id_list:
             try:
-                workspace_name = df_get_all_workspaces.query(
-                    'id == "{0}"'.format(workspace_id)
-                )["name"].iloc[0]
-                # Send API call to get data
+                workspace_name = df_get_all_workspaces.query(f'id == "{workspace_id}"')[
+                    "name"
+                ].iloc[0]
                 result = self.get_report_by_workspace(workspace_id)
-                # If result success then proceed:
                 if result.status_code == 200:
-                    # Create dataframe to store data
                     df = pd.DataFrame.from_dict(
                         result.json()["value"], orient="columns"
                     )
-                    # Add workspace name column
                     df["workspaceName"] = workspace_name
-                    # Convert all columns to string type (optional)
                     df = df.astype("str")
-                    # Append data
                     df_get_all_reports = pd.concat([df_get_all_reports, df])
             except Exception as e:
                 print(f"Error processing workspace {workspace_id}: {e}")
                 continue
+
         return df_get_all_reports
 
-    def get_all_dataset_refresh_history(self):
+    def get_all_dataset_refresh_history(self) -> pd.DataFrame:
         """
-        Get all dataset refresh history from Power BI.
+        Retrieve the refresh history for all refreshable datasets in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing refresh logs with metadata for each dataset,
+            including dataset and workspace details.
         """
         # Get all datasets
         df_get_all_datasets = self.get_all_datasets()
@@ -352,9 +456,13 @@ class PowerBIClient:
 
         return df_get_all_datasets_refresh_history
 
-    def get_all_dataflow_refresh_history(self):
+    def get_all_dataflow_refresh_history(self) -> pd.DataFrame:
         """
-        Get all dataflow refresh history from Power BI.
+        Retrieve the refresh history for all dataflows in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame with refresh transactions for each dataflow,
+            including related workspace metadata.
         """
         # Get all dataflows
         df_get_all_dataflows = self.get_all_dataflows()
@@ -407,10 +515,15 @@ class PowerBIClient:
 
         return df_get_all_dataflows_refresh_history
 
-    def get_all_dataset_users(self):
+    def get_all_dataset_users(self) -> pd.DataFrame:
         """
-        Get all dataset users from Power BI.
+        Retrieve user access information for all datasets in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame listing all users with access to each dataset,
+            along with dataset and workspace identifiers.
         """
+
         # Get all datasets
         df_get_all_datasets = self.get_all_datasets()
         # Filter Usage Report dataset
@@ -456,9 +569,13 @@ class PowerBIClient:
 
         return df_get_all_dataset_users
 
-    def get_all_dataset_sources(self):
+    def get_all_dataset_sources(self) -> pd.DataFrame:
         """
-        Get all dataset data sources from Power BI.
+        Retrieve all data sources used across datasets in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame listing the connection details (server, database, URL, etc.)
+            for each dataset source, including dataset and workspace metadata.
         """
         # Filter Usage Report dataset
         df_get_all_datasets = self.get_all_datasets()
@@ -509,9 +626,13 @@ class PowerBIClient:
 
         return df_get_all_dataset_sources
 
-    def get_all_dataflow_sources(self):
+    def get_all_dataflow_sources(self) -> pd.DataFrame:
         """
-        Get all dataflow data sources from Power BI.
+        Retrieve all data sources used across dataflows in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame listing connection details for each dataflow source,
+            including dataflow and workspace metadata.
         """
         # Get all dataflows
         df_get_all_dataflows = self.get_all_dataflows()

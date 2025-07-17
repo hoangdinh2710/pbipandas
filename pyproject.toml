@@ -1,6 +1,6 @@
 [project]
 name = "pbipandas"
-version = "0.1.2"
+version = "0.1.3"
 description = "Power BI API client"
 authors = [{ name = "Harry Dinh", email = "hoangdinh.2710@gmail.com" }]
 readme = "README.md"
