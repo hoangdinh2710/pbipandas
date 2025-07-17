@@ -25,7 +25,7 @@ pip install pbipandas
 Or for development:
 
 ```bash
-git clone https://github.com/yourusername/pbipandas.git
+git clone https://github.com/hoangdinh2710/pbipandas.git
 cd pbipandas
 pip install -e .
 ```
