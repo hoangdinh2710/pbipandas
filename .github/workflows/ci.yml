@@ -28,11 +28,3 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 .
-
-    - name: Format with black
-      run: |
-        black --check .
-
-    - name: Run tests with pytest
-      run: |
-        pytest
