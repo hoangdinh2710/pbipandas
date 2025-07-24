@@ -262,6 +262,24 @@ class PowerBIClient:
         result = requests.get(url=get_dataflow_source_url, headers=self.get_header())
         return result
 
+    def get_report_sources_by_id(self, workspace_id, report_id):
+        """
+        Get report sources by report id.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            report_id (str): The ID of the Power BI report.
+        Returns:
+            result (requests.Response): The response object containing the report sources.
+        """
+        # Define URL endpoint
+        get_report_source_url = (
+            f"{self.base_url}/{workspace_id}/reports/{report_id}/datasources"
+        )
+        # Send API to get data
+        result = requests.get(url=get_report_source_url, headers=self.get_header())
+        return result
+
     def get_dataset_users_by_id(self, workspace_id, dataset_id):
         """
         Get dataset users by dataset id.
@@ -678,3 +696,57 @@ class PowerBIClient:
                     continue
 
         return df_get_all_dataflow_sources
+
+    def get_all_report_sources(self) -> pd.DataFrame:
+        """
+        Retrieve all data sources used across reports in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame listing connection details for each report source,
+            including report and workspace metadata.
+        """
+        # Get all reports
+        df_get_all_reports = self.get_all_reports()
+        # Get report list
+        report_id_list = df_get_all_reports["id"]
+        # Define an empty dataframe
+        df_get_all_report_sources = pd.DataFrame()
+        # Loop through dataset
+        for report_id in report_id_list:
+            try:
+                workspace_id = df_get_all_reports.query(f'id == "{report_id}"')[
+                    "workspaceId"
+                ].iloc[0]
+                workspace_name = df_get_all_reports.query(f'id == "{report_id}"')[
+                    "workspaceName"
+                ].iloc[0]
+                report_name = df_get_all_reports.query(f'id == "{report_id}"')[
+                    "name"
+                ].iloc[0]
+                result = self.get_report_sources_by_id(workspace_id, report_id)
+                # If result success then proceed:
+                if result.status_code == 200:
+                    # Create dataframe to store data
+                    df = pd.DataFrame(result.json()["value"])
+                    # Add workspace name column
+                    df["workspaceId"] = workspace_id
+                    df["workspaceName"] = workspace_name
+                    df["reportId"] = report_id
+                    df["reportName"] = report_name
+                    # Extract more useful columns
+                    df[["server", "database", "connectionString", "url", "path"]] = df[
+                        "connectionDetails"
+                    ].apply(self.extract_connection_details)
+                    # Convert all columns to string type (optional)
+                    df = df.astype("str")
+                    # Append data
+                    df_get_all_report_sources = pd.concat(
+                        [df_get_all_report_sources, df]
+                    )
+            except Exception as e:
+                print(f"Error processing report {report_id}: {e}")
+                continue
+
+        return df_get_all_report_sources
+
+        
