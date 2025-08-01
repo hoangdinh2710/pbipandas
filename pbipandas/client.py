@@ -111,6 +111,28 @@ class PowerBIClient:
             )
 
     # Trigger actions
+    def execute_query(
+        self, workspace_id: str, dataset_id: str, query: str
+    ) -> requests.Response:
+        """
+        Execute a DAX query against a Power BI dataset.
+
+        Args:
+            workspace_id (str): The Power BI workspace ID.
+            dataset_id (str): The dataset ID.
+            query (str): The DAX query to execute.
+
+        Returns:
+            requests.Response: The HTTP response containing the query results.
+        """
+        url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/executeQueries"
+        body = {
+            "queries": [{"query": query}],
+            "serializerSettings": {"includeNulls": False},
+        }
+        result = requests.post(url, headers=self.get_header(), json=body)
+        return result
+
     def refresh_dataflow(self, workspace_id: str, dataflow_id: str) -> None:
         """
         Trigger a refresh for a specific dataflow.
@@ -297,6 +319,92 @@ class PowerBIClient:
         # Send API to get data
         result = requests.get(url=get_dataset_users_url, headers=self.get_header())
         return result
+
+    def get_dataset_tables_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset tables by dataset id.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset tables.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.VIEW.TABLES()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
+
+    def get_dataset_columns_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset columns by dataset id.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset columns.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.VIEW.COLUMNS()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
+
+    def get_dataset_measures_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset measures by dataset id.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset measures.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.VIEW.MEASURES()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
+
+    def get_dataset_calc_dependencies_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset calculation dependencies by dataset id.
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset calculation dependencies.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.CALCDEPENDENCY()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
 
     # Get data in bulk
     def get_all_workspaces(self) -> pd.DataFrame:
@@ -639,7 +747,9 @@ class PowerBIClient:
                         [df_get_all_dataset_sources, df]
                     )
             except Exception as e:
-                print(f"Error processing dataset {dataset_id}: {e}")
+                print(
+                    f"Get dataset sources - Error processing dataset {dataset_id}: {e}"
+                )
                 continue
 
         return df_get_all_dataset_sources
@@ -749,4 +859,181 @@ class PowerBIClient:
 
         return df_get_all_report_sources
 
-        
+    def get_all_dataset_tables(self) -> pd.DataFrame:
+        """
+        Retrieve all tables from all datasets in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing table metadata for each dataset,
+            including dataset and workspace identifiers.
+        """
+        df_get_all_datasets = self.get_all_datasets()
+        dataset_id_list = df_get_all_datasets["id"]
+        df_get_all_dataset_tables = pd.DataFrame()
+
+        for dataset_id in dataset_id_list:
+            try:
+                workspace_id = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceId"
+                ].iloc[0]
+                workspace_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceName"
+                ].iloc[0]
+                dataset_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "name"
+                ].iloc[0]
+                result = self.get_dataset_tables_by_id(workspace_id, dataset_id)
+                if result.status_code == 200:
+                    df = pd.DataFrame.from_dict(
+                        result.json()["results"][0]["tables"][0]["rows"],
+                        orient="columns",
+                    )
+                    df["workspaceId"] = workspace_id
+                    df["workspaceName"] = workspace_name
+                    df["datasetId"] = dataset_id
+                    df["datasetName"] = dataset_name
+                    df = df.astype("str")
+                    df_get_all_dataset_tables = pd.concat(
+                        [df_get_all_dataset_tables, df]
+                    )
+            except Exception as e:
+                print(
+                    f"Get dataset tables - Error processing dataset {dataset_id}: {e}"
+                )
+                continue
+
+        return df_get_all_dataset_tables
+
+    def get_all_dataset_columns(self) -> pd.DataFrame:
+        """
+        Retrieve all columns from all datasets in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing column metadata for each dataset,
+            including dataset and workspace identifiers.
+        """
+        df_get_all_datasets = self.get_all_datasets()
+        dataset_id_list = df_get_all_datasets["id"]
+        df_get_all_dataset_columns = pd.DataFrame()
+
+        for dataset_id in dataset_id_list:
+            try:
+                workspace_id = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceId"
+                ].iloc[0]
+                workspace_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceName"
+                ].iloc[0]
+                dataset_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "name"
+                ].iloc[0]
+                result = self.get_dataset_columns_by_id(workspace_id, dataset_id)
+                if result.status_code == 200:
+                    df = pd.DataFrame.from_dict(
+                        result.json()["results"][0]["tables"][0]["rows"],
+                        orient="columns",
+                    )
+                    df["workspaceId"] = workspace_id
+                    df["workspaceName"] = workspace_name
+                    df["datasetId"] = dataset_id
+                    df["datasetName"] = dataset_name
+                    df = df.astype("str")
+                    df_get_all_dataset_columns = pd.concat(
+                        [df_get_all_dataset_columns, df]
+                    )
+            except Exception as e:
+                print(
+                    f"Get dataset columns - Error processing dataset {dataset_id}: {e}"
+                )
+                continue
+
+        return df_get_all_dataset_columns
+
+    def get_all_dataset_measures(self) -> pd.DataFrame:
+        """
+        Retrieve all measures from all datasets in Power BI.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing measure metadata for each dataset,
+            including dataset and workspace identifiers.
+        """
+        df_get_all_datasets = self.get_all_datasets()
+        dataset_id_list = df_get_all_datasets["id"]
+        df_get_all_dataset_measures = pd.DataFrame()
+
+        for dataset_id in dataset_id_list:
+            try:
+                workspace_id = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceId"
+                ].iloc[0]
+                workspace_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceName"
+                ].iloc[0]
+                dataset_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "name"
+                ].iloc[0]
+                result = self.get_dataset_measures_by_id(workspace_id, dataset_id)
+                if result.status_code == 200:
+                    df = pd.DataFrame.from_dict(
+                        result.json()["results"][0]["tables"][0]["rows"],
+                        orient="columns",
+                    )
+                    df["workspaceId"] = workspace_id
+                    df["workspaceName"] = workspace_name
+                    df["datasetId"] = dataset_id
+                    df["datasetName"] = dataset_name
+                    df = df.astype("str")
+                    df_get_all_dataset_measures = pd.concat(
+                        [df_get_all_dataset_measures, df]
+                    )
+            except Exception as e:
+                print(
+                    f"Get dataset measures - Error processing dataset {dataset_id}: {e}"
+                )
+                continue
+
+        return df_get_all_dataset_measures
+
+    def get_all_dataset_calc_dependencies(self) -> pd.DataFrame:
+        """
+        Retrieve all calculation dependencies from all datasets in Power BI.
+        Returns:
+            pd.DataFrame: A DataFrame containing calculation dependency metadata for each dataset,
+            including dataset and workspace identifiers.
+        """
+        df_get_all_datasets = self.get_all_datasets()
+        dataset_id_list = df_get_all_datasets["id"]
+        df_get_all_dataset_calc_dependencies = pd.DataFrame()
+
+        for dataset_id in dataset_id_list:
+            try:
+                workspace_id = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceId"
+                ].iloc[0]
+                workspace_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "workspaceName"
+                ].iloc[0]
+                dataset_name = df_get_all_datasets.query(f'id == "{dataset_id}"')[
+                    "name"
+                ].iloc[0]
+                result = self.get_dataset_calc_dependencies_by_id(
+                    workspace_id, dataset_id
+                )
+                if result.status_code == 200:
+                    df = pd.DataFrame.from_dict(
+                        result.json()["results"][0]["tables"][0]["rows"],
+                        orient="columns",
+                    )
+                    df["workspaceId"] = workspace_id
+                    df["workspaceName"] = workspace_name
+                    df["datasetId"] = dataset_id
+                    df["datasetName"] = dataset_name
+                    df = df.astype("str")
+                    df_get_all_dataset_calc_dependencies = pd.concat(
+                        [df_get_all_dataset_calc_dependencies, df]
+                    )
+            except Exception as e:
+                print(
+                    f"Get dataset calculation dependecy - Error processing dataset {dataset_id}: {e}"
+                )
+                continue
