@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pbipandas"
 version = "0.1.6"
-description = "Power BI API client"
+description = "A Python wrapper for Power BI REST API with Pandas integration"
 authors = [{ name = "Harry Dinh", email = "hoangdinh.2710@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.7"
@@ -16,7 +16,7 @@ dependencies = [
 license = {text = "MIT"}
 
 [tool.bump-my-version]
-current_version = "0.1.0"
+current_version = "0.1.6"
 
 [[tool.bump-my-version.files]]
 filename = "pyproject.toml"
