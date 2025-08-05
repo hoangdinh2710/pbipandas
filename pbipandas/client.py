@@ -111,6 +111,28 @@ class PowerBIClient:
             )
 
     # Trigger actions
+    def execute_query(
+        self, workspace_id: str, dataset_id: str, query: str
+    ) -> requests.Response:
+        """
+        Execute a DAX query against a Power BI dataset.
+
+        Args:
+            workspace_id (str): The Power BI workspace ID.
+            dataset_id (str): The dataset ID.
+            query (str): The DAX query to execute.
+
+        Returns:
+            requests.Response: The HTTP response containing the query results.
+        """
+        url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/executeQueries"
+        body = {
+            "queries": [{"query": query}],
+            "serializerSettings": {"includeNulls": False},
+        }
+        result = requests.post(url, headers=self.get_header(), json=body)
+        return result
+
     def execute_query(self, workspace_id: str, dataset_id: str, query: str) -> requests.Response:
         """
         Execute a DAX query against a Power BI dataset.
@@ -429,6 +451,92 @@ class PowerBIClient:
 
         return response
     
+    def get_dataset_tables_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset tables by dataset id.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset tables.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.VIEW.TABLES()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
+
+    def get_dataset_columns_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset columns by dataset id.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset columns.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.VIEW.COLUMNS()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
+
+    def get_dataset_measures_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset measures by dataset id.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset measures.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.VIEW.MEASURES()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
+
+    def get_dataset_calc_dependencies_by_id(self, workspace_id, dataset_id):
+        """
+        Get dataset calculation dependencies by dataset id.
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            result (requests.Response): The response object containing the dataset calculation dependencies.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+        # Query to execute
+        query_body = {
+            "queries": [{"query": "EVALUATE INFO.CALCDEPENDENCY()"}],
+            "serializerSettings": {"includeNulls": False},
+        }
+
+        response = requests.post(url, headers=self.get_header(), json=query_body)
+
+        return response
+
     # Get data in bulk
     def get_all_workspaces(self) -> pd.DataFrame:
         """
@@ -771,6 +879,9 @@ class PowerBIClient:
                     )
             except Exception as e:
                 print(f"Get dataset sources - Error processing dataset {dataset_id}: {e}")
+                print(
+                    f"Get dataset sources - Error processing dataset {dataset_id}: {e}"
+                )
                 continue
 
         return df_get_all_dataset_sources

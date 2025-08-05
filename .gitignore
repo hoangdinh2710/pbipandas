@@ -9,3 +9,4 @@ dist/
 build/
 pyproject.toml
 poc.ipynb
+.pypirc
