@@ -1,27 +1,31 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pbipandas"
-version = "0.1.6"
+version = "0.1.0"
 description = "A Python wrapper for Power BI REST API with Pandas integration"
-authors = [{ name = "Harry Dinh", email = "hoangdinh.2710@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.7"
+authors =  [{ name = "Harry Dinh", email = "hoangdinh.2710@gmail.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.8"
 dependencies = [
     "requests",
     "pandas"
 ]
-license = {text = "MIT"}
+
+[project.urls]
+Homepage = "https://github.com/hoangdinh2710/pbipandas"
+Repository = "https://github.com/hoangdinh2710/pbipandas"
+Issues = "https://github.com/hoangdinh2710/pbipandas/issues"
 
 [tool.bump-my-version]
-current_version = "0.1.6"
+current_version = "0.1.0"
+commit = true
+tag = true
 
 [[tool.bump-my-version.files]]
 filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
-
-[project.urls]
-Homepage = "https://github.com/hoangdinh2710/pbipandas"
