@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pbipandas"
-version = "0.1.5"
+version = "0.1.6"
 description = "Power BI API client"
 authors = [{ name = "Harry Dinh", email = "hoangdinh.2710@gmail.com" }]
 readme = "README.md"
