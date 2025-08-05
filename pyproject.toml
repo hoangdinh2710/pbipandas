@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pbipandas"
-version = "0.1.5"
+version = "0.1.6"
 description = "A Python wrapper for Power BI REST API with Pandas integration"
 readme = "README.md"
 authors =  [{ name = "Harry Dinh", email = "hoangdinh.2710@gmail.com" }]
@@ -21,7 +21,7 @@ Repository = "https://github.com/hoangdinh2710/pbipandas"
 Issues = "https://github.com/hoangdinh2710/pbipandas/issues"
 
 [tool.bump-my-version]
-current_version = "0.1.5"
+current_version = "0.1.6"
 commit = true
 tag = true
 
