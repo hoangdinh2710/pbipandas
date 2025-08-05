@@ -29,8 +29,8 @@ class PowerBIClient:
         self.tenant_id = tenant_id
         self.client_id = client_id
         self.client_secret = client_secret
-        self.access_token = self.get_token()
         self.base_url = "https://api.powerbi.com/v1.0/myorg/groups/"
+        self.access_token = None
 
     def get_token(self) -> str:
         """
@@ -57,7 +57,11 @@ class PowerBIClient:
             headers=header,
             data=data,
         )
-        self.access_token = result.json()["access_token"]
+
+        token_data = result.json()
+
+        self.access_token = token_data["access_token"]
+
         return self.access_token
 
     def get_header(self) -> dict:
@@ -67,9 +71,12 @@ class PowerBIClient:
         Returns:
             dict: Headers with content type and bearer token.
         """
+
+        token = self.get_token()
+
         return {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.access_token}",
+            "Authorization": f"Bearer {token}",
         }
 
     # Helper functions
