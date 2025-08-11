@@ -901,6 +901,8 @@ class PowerBIClient:
                     df["workspaceName"] = workspace_name
                     df["datasetId"] = dataset_id
                     df["datasetName"] = dataset_name
+                    # Rename columns to remove brackets
+                    df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
                     df = df.astype("str")
                     df_get_all_dataset_tables = pd.concat(
                         [df_get_all_dataset_tables, df]
@@ -947,6 +949,8 @@ class PowerBIClient:
                     df["datasetId"] = dataset_id
                     df["datasetName"] = dataset_name
                     df = df.astype("str")
+                    # Rename columns to remove brackets
+                    df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
                     df_get_all_dataset_columns = pd.concat(
                         [df_get_all_dataset_columns, df]
                     )
@@ -992,6 +996,8 @@ class PowerBIClient:
                     df["datasetId"] = dataset_id
                     df["datasetName"] = dataset_name
                     df = df.astype("str")
+                    # Rename columns to remove brackets
+                    df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
                     df_get_all_dataset_measures = pd.concat(
                         [df_get_all_dataset_measures, df]
                     )
@@ -1038,6 +1044,8 @@ class PowerBIClient:
                     df["datasetId"] = dataset_id
                     df["datasetName"] = dataset_name
                     df = df.astype("str")
+                    # Rename columns to remove brackets
+                    df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
                     df_get_all_dataset_calc_dependencies = pd.concat(
                         [df_get_all_dataset_calc_dependencies, df]
                     )
