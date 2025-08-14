@@ -173,6 +173,31 @@ class PowerBIClient:
             print(
                 f"Failed to refresh dataset {dataset_id}. Status code: {result.status_code}"
             )
+            
+    def update_dataset_parameters(
+        self, workspace_id: str, dataset_id: str, parameters: dict
+    ) -> requests.Response:
+        """
+        Update parameters for a specific dataset.
+        Args:
+            workspace_id (str): The Power BI workspace ID.
+            dataset_id (str): The dataset ID.
+            parameters (dict): A dictionary of parameters to update.
+        Returns:
+            requests.Response: The HTTP response containing the result of the update operation.
+        """
+        url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/Default.UpdateParameters"
+        body = {
+            "updateDetails": [
+                {
+                    "name": key,
+                    "newValue": value,
+                }
+                for key, value in parameters.items()
+            ]
+        }
+        result = requests.post(url, headers=self.get_header(), json=body)
+        return result
 
     # Get data functions
     def get_report_by_workspace(self, workspace_id: str) -> requests.Response:
@@ -1054,3 +1079,5 @@ class PowerBIClient:
                     f"Get dataset calculation dependecy - Error processing dataset {dataset_id}: {e}"
                 )
                 continue
+
+        return df_get_all_dataset_calc_dependencies
