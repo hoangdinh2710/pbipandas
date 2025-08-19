@@ -1,7 +1,7 @@
 from .workspace import WorkspaceClient
 from .dataset import DatasetClient
 from .report import ReportClient
-from .dataflows import DataflowClient
+from .dataflow import DataflowClient
 from .bulks import BulkClient
 from .utils import print_client_info, get_client_info
 

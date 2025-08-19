@@ -184,7 +184,7 @@ schema_doc = all_columns.merge(all_tables, on=['datasetId', 'tableName'])
 
 ## 🏗️ Architecture
 
-pbipandas uses a clean, modular architecture:
+pbipandas uses a clean, modular architecture with proper inheritance:
 
 ```
 pbipandas/
@@ -193,10 +193,15 @@ pbipandas/
 ├── workspace/      # Workspace operations
 ├── dataset/        # Dataset operations + DAX queries
 ├── report/         # Report operations  
-├── dataflows/      # Dataflow operations
+├── dataflow/       # Dataflow operations
 ├── bulks/          # Bulk retrieval across all workspaces
 └── client.py       # Unified PowerBIClient
 ```
+
+**Inheritance Structure:**
+- `PowerBIClient` inherits from `WorkspaceClient`, `DatasetClient`, `ReportClient`, `DataflowClient`, and `BulkClient`
+- `BulkClient` inherits from `BaseClient` and creates instances of individual clients for bulk operations
+- All individual clients inherit from `BaseClient` for authentication
 
 This design allows you to:
 - **Import only what you need** for smaller footprint

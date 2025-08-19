@@ -2,7 +2,7 @@ from .client import PowerBIClient
 from .workspace import WorkspaceClient
 from .dataset import DatasetClient
 from .report import ReportClient
-from .dataflows import DataflowClient
+from .dataflow import DataflowClient
 from .bulks import BulkClient
 from .auth import BaseClient
 from .utils import extract_connection_details, get_client_info, print_client_info
