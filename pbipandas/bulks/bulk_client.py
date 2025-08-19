@@ -30,7 +30,7 @@ class BulkClient(BaseClient):
 
         for _, workspace in df_workspaces.iterrows():
             try:
-                df = dataset_client.get_dataset_by_id(workspace['id'])
+                df = dataset_client.get_datasets_by_id(workspace['id'])
                 if not df.empty:
                     df['workspaceId'] = workspace['id']
                     df['workspaceName'] = workspace['name']
@@ -56,7 +56,7 @@ class BulkClient(BaseClient):
 
         for _, workspace in df_workspaces.iterrows():
             try:
-                df = dataflow_client.get_dataflow_by_id(workspace['id'])
+                df = dataflow_client.get_dataflows_by_id(workspace['id'])
                 if not df.empty:
                     df['workspaceId'] = workspace['id']
                     df['workspaceName'] = workspace['name']
@@ -82,7 +82,7 @@ class BulkClient(BaseClient):
 
         for _, workspace in df_workspaces.iterrows():
             try:
-                df = report_client.get_report_by_id(workspace['id'])
+                df = report_client.get_reports_by_id(workspace['id'])
                 if not df.empty:
                     df['workspaceId'] = workspace['id']
                     df['workspaceName'] = workspace['name']

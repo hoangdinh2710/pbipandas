@@ -27,6 +27,20 @@ class DatasetClient(BaseClient):
             return pd.DataFrame([result.json()])
         return pd.DataFrame()
 
+    def get_datasets_by_id(self, workspace_id: str) -> pd.DataFrame:
+        """
+        Retrieve all datasets in a specific Power BI workspace.
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+        Returns:
+            pd.DataFrame: DataFrame containing all datasets in the specified workspace.
+        """
+        get_datasets_url = f"{self.base_url}/{workspace_id}/datasets"
+        result = requests.get(url=get_datasets_url, headers=self.get_header())
+        if result.status_code == 200:
+            return pd.DataFrame(result.json()["value"])
+        return pd.DataFrame()
+
     def refresh_dataset(self, workspace_id: str, dataset_id: str, body: dict = None) -> None:
         """
         Trigger a refresh for a specific dataset.
@@ -228,6 +242,7 @@ class DatasetClient(BaseClient):
             "serializerSettings": {"includeNulls": True},
         }
         result = requests.post(url, headers=self.get_header(), json=query_body)
+
         if result.status_code == 200:
             df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
             if not df.empty:

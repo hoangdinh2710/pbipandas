@@ -26,6 +26,22 @@ class DataflowClient(BaseClient):
         if result.status_code == 200:
             return pd.DataFrame([result.json()])
         return pd.DataFrame()
+    
+    def get_dataflows_by_id(self, workspace_id: str) -> pd.DataFrame:
+        """        
+        Retrieve all dataflows in a specific Power BI workspace.
+        
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.                   
+        Returns:    
+            pd.DataFrame: DataFrame containing all dataflows in the specified workspace.
+        """
+        get_dataflows_url = f"{self.base_url}/{workspace_id}/dataflows"
+        result = requests.get(url=get_dataflows_url, headers=self.get_header())
+        if result.status_code == 200:
+            return pd.DataFrame(result.json()["value"])
+        return pd.DataFrame()
+        
 
     def refresh_dataflow(self, workspace_id: str, dataflow_id: str) -> None:
         """

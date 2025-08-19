@@ -27,6 +27,20 @@ class ReportClient(BaseClient):
             return pd.DataFrame([result.json()])
         return pd.DataFrame()
 
+    def get_reports_by_id(self, workspace_id: str) -> pd.DataFrame:
+        """
+        Retrieve all reports in a specific Power BI workspace.
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+        Returns:
+            pd.DataFrame: DataFrame containing all reports in the specified workspace.
+        """
+        get_reports_url = f"{self.base_url}/{workspace_id}/reports"
+        result = requests.get(url=get_reports_url, headers=self.get_header())
+        if result.status_code == 200:
+            return pd.DataFrame(result.json()["value"])
+        return pd.DataFrame()
+
     def get_report_sources_by_id(self, workspace_id: str, report_id: str) -> pd.DataFrame:
         """
         Get report sources by report id.
