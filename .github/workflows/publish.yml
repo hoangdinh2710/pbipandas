@@ -1,20 +1,20 @@
-name: Publish Python 🐍 package to PyPI
+name: Publish to PyPI
 
 on:
   push:
     tags:
-      - "v*"  # Trigger on tags like v0.1.0
-  workflow_dispatch:  # Allow manual trigger from GitHub UI
+      - "v*"
+  workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for version history
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -24,13 +24,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build twine bump-my-version
+          pip install build twine
 
-      - name: Sync version from tag to pyproject.toml
+      - name: Update version in pyproject.toml
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           echo "Setting version to $VERSION"
-          bump-my-version write --new-version $VERSION
+          
+          # Update version in pyproject.toml
+          sed -i "s/version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+          sed -i "s/current_version = \".*\"/current_version = \"$VERSION\"/" pyproject.toml
+          
+          # Show updated version
+          echo "Updated pyproject.toml:"
+          grep "version = " pyproject.toml
+          grep "current_version = " pyproject.toml
 
       - name: Build package
         run: python -m build
