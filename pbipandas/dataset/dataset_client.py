@@ -130,7 +130,7 @@ class DatasetClient(BaseClient):
 
     def execute_query(
         self, workspace_id: str, dataset_id: str, query: str
-    ) -> requests.Response:
+    ) -> pd.DataFrame:
         """
         Execute a DAX query against a Power BI dataset.
 
@@ -140,7 +140,7 @@ class DatasetClient(BaseClient):
             query (str): The DAX query to execute.
 
         Returns:
-            requests.Response: The HTTP response containing the query results.
+            pd.DataFrame: DataFrame containing the query results.
         """
         url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/executeQueries"
         body = {
@@ -148,7 +148,14 @@ class DatasetClient(BaseClient):
             "serializerSettings": {"includeNulls": True},
         }
         result = requests.post(url, headers=self.get_header(), json=body)
-        return result
+        
+        if result.status_code == 200:
+            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
+            if not df.empty:
+                # Clean up column names by removing square brackets
+                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
+            return df
+        return pd.DataFrame()
 
     def get_dataset_sources_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
         """
