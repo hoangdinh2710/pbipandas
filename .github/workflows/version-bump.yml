@@ -11,9 +11,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Required for tags and history
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -25,40 +26,82 @@ jobs:
           python -m pip install --upgrade pip
           pip install bump-my-version
 
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(bump-my-version show current_version)
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
       - name: Determine bump type from commit messages
         id: bump
         run: |
-          COMMITS=$(git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"%s")
+          # Get the last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
+          
+          # Get commits since last tag
+          COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
           echo "Commits since last tag:"
           echo "$COMMITS"
 
-          if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+          # Determine bump type based on conventional commits
+          if echo "$COMMITS" | grep -q "BREAKING CHANGE\|!:"; then
             echo "BUMP=major" >> $GITHUB_ENV
+            echo "bump_type=major" >> $GITHUB_OUTPUT
           elif echo "$COMMITS" | grep -qE "^feat"; then
             echo "BUMP=minor" >> $GITHUB_ENV
-          elif echo "$COMMITS" | grep -qE "^fix"; then
+            echo "bump_type=minor" >> $GITHUB_OUTPUT
+          elif echo "$COMMITS" | grep -qE "^fix|^docs|^style|^refactor|^perf|^test|^chore"; then
             echo "BUMP=patch" >> $GITHUB_ENV
+            echo "bump_type=patch" >> $GITHUB_OUTPUT
           else
-            echo "No version bump needed"
-            exit 0
+            echo "No conventional commits found, defaulting to patch"
+            echo "BUMP=patch" >> $GITHUB_ENV
+            echo "bump_type=patch" >> $GITHUB_OUTPUT
           fi
 
       - name: Bump version
+        id: bump_version
         run: |
-          # Auto bump based on commit type: default to minor if none
-          BUMP=${BUMP:-minor}
+          BUMP=${BUMP:-patch}
           echo "Bumping version ($BUMP)"
-          bump-my-version bump $BUMP --message "chore: bump version"
+          
+          # Perform the version bump
+          bump-my-version bump $BUMP --message "chore: bump version to {new_version}"
+          
+          # Get the new version
+          NEW_VERSION=$(bump-my-version show current_version)
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
 
-      - name: Commit version bump and create tag
+      - name: Commit and push version bump
         run: |
-          VERSION=$(bump-my-version show current_version)
+          # Check if there are changes to commit
           if git diff --quiet; then
-            echo "No changes detected, skipping commit and tag."
+            echo "No changes detected, skipping commit."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -am "chore: bump version to $VERSION"
-            git tag v$VERSION
-            git push origin main --tags
+            # Commit the version bump
+            git add .
+            git commit -m "chore: bump version to ${{ steps.bump_version.outputs.new_version }}"
+            
+            # Push the commit
+            git push origin main
           fi
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+          
+          # Create the tag
+          git tag "v$NEW_VERSION"
+          
+          # Push the tag
+          git push origin "v$NEW_VERSION"
+          
+          echo "Created and pushed tag: v$NEW_VERSION"
