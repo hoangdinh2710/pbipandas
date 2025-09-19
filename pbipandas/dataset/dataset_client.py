@@ -111,6 +111,22 @@ class DatasetClient(BaseClient):
         }
         result = requests.post(url, headers=self.get_header(), json=body)
         return result
+    
+    def get_dataset_refresh_schedule_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
+        """
+        Get dataset refresh schedule by dataset id.
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            pd.DataFrame: DataFrame containing the dataset refresh schedule.
+        """
+    
+        get_dataset_refresh_schedule_url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/refreshSchedule"
+        result = requests.get(url=get_dataset_refresh_schedule_url, headers=self.get_header())
+        if result.status_code == 200:
+            return pd.DataFrame([result.json()])
+        return pd.DataFrame()
 
     def get_dataset_refresh_history_by_id(self, workspace_id: str, dataset_id: str, top_n: int = 10) -> pd.DataFrame:
         """
