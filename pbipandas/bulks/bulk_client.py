@@ -105,7 +105,7 @@ class BulkClient(BaseClient):
         df_datasets = self.get_all_datasets()
         df_all_refresh_history = pd.DataFrame()
         
-        refreshable_datasets = df_datasets[df_datasets['isRefreshable'] == 'True']
+        refreshable_datasets = df_datasets[df_datasets['isRefreshable'] == True]
         
         for _, dataset in refreshable_datasets.iterrows():
             try:
@@ -434,7 +434,7 @@ class BulkClient(BaseClient):
         df_datasets = self.get_all_datasets()
         df_all_schedules = pd.DataFrame()
         
-        refreshable_datasets = df_datasets[df_datasets['isRefreshable'] == 'True']
+        refreshable_datasets = df_datasets[df_datasets['isRefreshable'] == True]
         
         for _, dataset in refreshable_datasets.iterrows():
             try:
