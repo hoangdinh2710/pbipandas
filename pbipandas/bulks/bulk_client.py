@@ -9,7 +9,7 @@ from ..dataflow.dataflow_client import DataflowClient
 class BulkClient(BaseClient):
     """
     Bulk data retrieval operations for Power BI.
-    
+
     This class provides methods for retrieving data in bulk from multiple
     Power BI objects across workspaces. It creates instances of individual
     clients to perform specific operations.
@@ -24,7 +24,7 @@ class BulkClient(BaseClient):
         # Create instances of the individual clients
         workspace_client = WorkspaceClient(self.tenant_id, self.client_id, self.client_secret)
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_workspaces = workspace_client.get_all_workspaces()
         df_all_datasets = pd.DataFrame()
 
@@ -50,7 +50,7 @@ class BulkClient(BaseClient):
         # Create instances of the individual clients
         workspace_client = WorkspaceClient(self.tenant_id, self.client_id, self.client_secret)
         dataflow_client = DataflowClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_workspaces = workspace_client.get_all_workspaces()
         df_all_dataflows = pd.DataFrame()
 
@@ -76,7 +76,7 @@ class BulkClient(BaseClient):
         # Create instances of the individual clients
         workspace_client = WorkspaceClient(self.tenant_id, self.client_id, self.client_secret)
         report_client = ReportClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_workspaces = workspace_client.get_all_workspaces()
         df_all_reports = pd.DataFrame()
 
@@ -101,12 +101,12 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_all_refresh_history = pd.DataFrame()
-        
-        refreshable_datasets = df_datasets[df_datasets['isRefreshable'] == True]
-        
+
+        refreshable_datasets = df_datasets[df_datasets['isRefreshable']]
+
         for _, dataset in refreshable_datasets.iterrows():
             try:
                 df = dataset_client.get_dataset_refresh_history_by_id(dataset['workspaceId'], dataset['id'])
@@ -130,14 +130,14 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataflow_client = DataflowClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_dataflows = self.get_all_dataflows()
         df_all_refresh_history = pd.DataFrame()
 
         for _, dataflow in df_dataflows.iterrows():
             try:
                 df = dataflow_client.get_dataflow_refresh_history_by_id(
-                    dataflow['workspaceId'], 
+                    dataflow['workspaceId'],
                     dataflow['objectId']
                 )
                 if not df.empty:
@@ -160,7 +160,7 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_datasets = df_datasets[~df_datasets['name'].str.contains("Usage Metrics")]
         df_all_users = pd.DataFrame()
@@ -188,7 +188,7 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_datasets = df_datasets[~df_datasets['name'].str.contains("Usage Metrics")]
         df_all_sources = pd.DataFrame()
@@ -216,14 +216,14 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataflow_client = DataflowClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_dataflows = self.get_all_dataflows()
         df_all_sources = pd.DataFrame()
 
         for _, dataflow in df_dataflows.iterrows():
             try:
                 df = dataflow_client.get_dataflow_sources_by_id(
-                    dataflow['workspaceId'], 
+                    dataflow['workspaceId'],
                     dataflow['objectId']
                 )
                 if not df.empty:
@@ -246,7 +246,7 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         report_client = ReportClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_reports = self.get_all_reports()
         df_all_sources = pd.DataFrame()
 
@@ -273,7 +273,7 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_all_tables = pd.DataFrame()
 
@@ -300,7 +300,7 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_all_columns = pd.DataFrame()
 
@@ -327,7 +327,7 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_all_measures = pd.DataFrame()
 
@@ -349,10 +349,10 @@ class BulkClient(BaseClient):
     def get_measures_for_dataset_ids_across_workspaces(self, dataset_id_list: list) -> pd.DataFrame:
         """
         Retrieve measures for a specific list of dataset IDs across all workspaces.
-        
+
         Args:
             dataset_id_list (list): List of dataset IDs to retrieve measures for.
-            
+
         Returns:
             pd.DataFrame: DataFrame containing measures from all specified datasets,
                          with additional columns for dataset_id, dataset_name, workspace_id, and workspace_name.
@@ -360,23 +360,23 @@ class BulkClient(BaseClient):
         # Create instances of the individual clients
         workspace_client = WorkspaceClient(self.tenant_id, self.client_id, self.client_secret)
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_all_measures = pd.DataFrame()
-        
+
         # Get all workspaces to search through
         df_workspaces = workspace_client.get_all_workspaces()
-        
+
         for _, workspace in df_workspaces.iterrows():
             workspace_id = workspace['id']
             workspace_name = workspace['name']
-            
+
             # Get datasets in this workspace
             try:
                 df_datasets = dataset_client.get_dataset_by_id(workspace_id)
                 if not df_datasets.empty:
                     # Filter to only the datasets we're interested in
                     matching_datasets = df_datasets[df_datasets['id'].isin(dataset_id_list)]
-                    
+
                     for _, dataset in matching_datasets.iterrows():
                         try:
                             df_measures = dataset_client.get_dataset_measures_by_id(workspace_id, dataset['id'])
@@ -392,7 +392,7 @@ class BulkClient(BaseClient):
             except Exception as e:
                 print(f"Warning: Failed to retrieve datasets for workspace {workspace_id}: {str(e)}")
                 continue
-        
+
         return df_all_measures
 
     def get_all_dataset_calc_dependencies(self) -> pd.DataFrame:
@@ -403,7 +403,7 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_all_dependencies = pd.DataFrame()
 
@@ -430,12 +430,12 @@ class BulkClient(BaseClient):
         """
         # Create instances of the individual clients
         dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
-        
+
         df_datasets = self.get_all_datasets()
         df_all_schedules = pd.DataFrame()
-        
-        refreshable_datasets = df_datasets[df_datasets['isRefreshable'] == True]
-        
+
+        refreshable_datasets = df_datasets[df_datasets['isRefreshable']]
+
         for _, dataset in refreshable_datasets.iterrows():
             try:
                 df = dataset_client.get_dataset_refresh_schedule_by_id(dataset['workspaceId'], dataset['id'])

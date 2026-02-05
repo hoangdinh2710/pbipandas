@@ -7,7 +7,7 @@ from ..utils import extract_connection_details
 class ReportClient(BaseClient):
     """
     Report-related operations for Power BI.
-    
+
     This class provides methods for managing and retrieving information
     about Power BI reports.
     """

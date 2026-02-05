@@ -9,9 +9,12 @@ from .auth import BaseClient
 from .utils import extract_connection_details, get_client_info, print_client_info
 
 # Convenience function for getting help without creating a client
+
+
 def info():
     """Display comprehensive information about all available PbiPandas functions."""
     print_client_info()
+
 
 __version__ = "1.0.0"
 __all__ = [
