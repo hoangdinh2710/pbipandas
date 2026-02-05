@@ -49,6 +49,23 @@ Schema & Metadata:
 Configuration:
 • update_dataset_parameters(workspace_id, dataset_id, parameters) - Update dataset parameters
 
+🛡️ GATEWAY OPERATIONS
+──────────────────────
+• get_all_gateways()                                 - List gateways available to caller
+• get_gateway_by_id(gateway_id)                      - Get metadata for a specific gateway
+• get_gateway_datasources(gateway_id)                - List data sources for a gateway
+• get_gateway_datasource(gateway_id, datasource_id)  - Get a single data source definition
+• create_gateway_datasource(gateway_id, datasource_definition) - Create a gateway data source
+• update_gateway_datasource(gateway_id, datasource_id, update_payload) - Update gateway data source properties
+• update_gateway_datasource_credentials(gateway_id, datasource_id, credential_details) - Update credentials
+• delete_gateway_datasource(gateway_id, datasource_id) - Remove a gateway data source
+• get_gateway_datasource_users(gateway_id, datasource_id) - List data source permissions
+• add_gateway_datasource_user(gateway_id, datasource_id, access_details) - Grant data source access
+• delete_gateway_datasource_user(gateway_id, datasource_id, email_address) - Remove data source access
+• get_gateway_datasource_status(gateway_id, datasource_id) - View data source health status
+• discover_gateways(dataset_id)                      - Discover available gateways for a dataset
+• bind_dataset_to_gateway(workspace_id, dataset_id, gateway_object_id, datasource_object_ids) - Bind dataset to gateway
+
 📋 REPORT OPERATIONS
 ────────────────────
 • get_report_by_id(workspace_id, report_id)           - Get report metadata

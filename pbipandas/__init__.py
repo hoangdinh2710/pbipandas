@@ -4,6 +4,7 @@ from .dataset import DatasetClient
 from .report import ReportClient
 from .dataflow import DataflowClient
 from .bulks import BulkClient
+from .gateway import GatewayClient
 from .auth import BaseClient
 from .utils import extract_connection_details, get_client_info, print_client_info
 
@@ -19,7 +20,8 @@ __all__ = [
     'DatasetClient',        # Dataset-specific operations
     'ReportClient',         # Report-specific operations
     'DataflowClient',       # Dataflow-specific operations
-    'BulkClient',          # Bulk data retrieval operations
+    'BulkClient',           # Bulk data retrieval operations
+    'GatewayClient',        # Gateway-specific operations
     'BaseClient',          # Base authentication class
     'extract_connection_details',  # Utility function
     'info',                # Help function

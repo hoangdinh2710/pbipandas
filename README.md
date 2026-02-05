@@ -18,6 +18,7 @@
 - ⚡ **Bulk Operations**: Retrieve data across all workspaces efficiently
 - 🔄 **Refresh Management**: Trigger and monitor dataset/dataflow refreshes
 - 📝 **DAX Queries**: Execute DAX queries against datasets
+- 🛡️ **Gateway Administration**: Inspect and manage on-premises data gateways
 
 ---
 
@@ -122,6 +123,7 @@ dataset_client.refresh_tables_from_dataset(workspace_id, dataset_id, ["Table1", 
 | `DatasetClient` | **Dataset operations** | `execute_query()`, `refresh_dataset()`, `get_dataset_*()`, `get_measures_for_datasets()` |
 | `ReportClient` | **Report operations** | `get_report_by_id()`, `get_report_sources_by_id()` |
 | `DataflowClient` | **Dataflow operations** | `refresh_dataflow()`, `get_dataflow_*()` |
+| `GatewayClient` | **Gateway operations** | `get_all_gateways()`, `get_gateway_datasources()` |
 | `BulkClient` | **Bulk data retrieval** | `get_all_*()` functions |
 
 ## 🎯 Common Use Cases
@@ -194,6 +196,7 @@ pbipandas/
 ├── dataset/        # Dataset operations + DAX queries
 ├── report/         # Report operations  
 ├── dataflow/       # Dataflow operations
+├── gateway/        # Gateway management APIs
 ├── bulks/          # Bulk retrieval across all workspaces
 └── client.py       # Unified PowerBIClient
 ```

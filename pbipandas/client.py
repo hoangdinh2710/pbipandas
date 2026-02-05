@@ -3,10 +3,18 @@ from .dataset import DatasetClient
 from .report import ReportClient
 from .dataflow import DataflowClient
 from .bulks import BulkClient
+from .gateway import GatewayClient
 from .utils import print_client_info, get_client_info
 
 
-class PowerBIClient(WorkspaceClient, DatasetClient, ReportClient, DataflowClient, BulkClient):
+class PowerBIClient(
+    WorkspaceClient,
+    DatasetClient,
+    ReportClient,
+    DataflowClient,
+    BulkClient,
+    GatewayClient,
+):
     """
     PowerBIClient handles authentication and API calls to the Power BI REST API.
     
