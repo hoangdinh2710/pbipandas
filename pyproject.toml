@@ -20,22 +20,22 @@ Homepage = "https://github.com/hoangdinh2710/pbipandas"
 Repository = "https://github.com/hoangdinh2710/pbipandas"
 Issues = "https://github.com/hoangdinh2710/pbipandas/issues"
 
-[tool.bump-my-version]
+[tool.bumpversion]
 current_version = "1.0.2"
 commit = true
 tag = true
 
-[[tool.bump-my-version.files]]
+[[tool.bumpversion.files]]
 filename = "pyproject.toml"
 search = 'current_version = "{current_version}"'
 replace = 'current_version = "{new_version}"'
 
-[[tool.bump-my-version.files]]
+[[tool.bumpversion.files]]
 filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
-[[tool.bump-my-version.files]]
+[[tool.bumpversion.files]]
 filename = "pbipandas/__init__.py"
 search = '__version__ = "{current_version}"'
 replace = '__version__ = "{new_version}"'
