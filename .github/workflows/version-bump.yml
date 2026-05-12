@@ -42,40 +42,24 @@ jobs:
       - name: Validate version metadata
         id: current_version
         run: |
-          CURRENT_VERSION=$(python - <<'PY'
-          import re
-          from pathlib import Path
+          PROJECT_VERSION=$(grep -m1 '^version = "' pyproject.toml | sed 's/^version = "\([^"]*\)"$/\1/')
+          CONFIGURED_VERSION=$(grep -m1 '^current_version = "' pyproject.toml | sed 's/^current_version = "\([^"]*\)"$/\1/')
+          PACKAGE_VERSION=$(grep -m1 '^__version__ = "' pbipandas/__init__.py | sed 's/^__version__ = "\([^"]*\)"$/\1/')
 
-          pyproject_text = Path("pyproject.toml").read_text(encoding="utf-8")
-          init_text = Path("pbipandas/__init__.py").read_text(encoding="utf-8")
+          if [ -z "$PROJECT_VERSION" ] || [ -z "$CONFIGURED_VERSION" ] || [ -z "$PACKAGE_VERSION" ]; then
+            echo "Could not parse version metadata from repository files."
+            exit 1
+          fi
 
-          project_match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject_text, re.MULTILINE)
-          current_match = re.search(r'^current_version\s*=\s*"([^"]+)"', pyproject_text, re.MULTILINE)
-          package_match = re.search(r'__version__\s*=\s*"([^"]+)"', init_text)
+          if [ "$PROJECT_VERSION" != "$CONFIGURED_VERSION" ] || [ "$CONFIGURED_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "project.version=$PROJECT_VERSION"
+            echo "tool.bump-my-version.current_version=$CONFIGURED_VERSION"
+            echo "pbipandas.__version__=$PACKAGE_VERSION"
+            echo "Version metadata is inconsistent. Align all version fields before running release automation."
+            exit 1
+          fi
 
-          if not project_match or not current_match:
-            raise SystemExit("Could not parse version metadata from pyproject.toml")
-
-          if not package_match:
-            raise SystemExit("Could not find __version__ in pbipandas/__init__.py")
-
-          project_version = project_match.group(1)
-          configured_version = current_match.group(1)
-          package_version = package_match.group(1)
-          versions = {
-            "project.version": project_version,
-            "tool.bump-my-version.current_version": configured_version,
-            "pbipandas.__version__": package_version,
-          }
-
-          if len(set(versions.values())) != 1:
-            for name, value in versions.items():
-              print(f"{name}={value}")
-            raise SystemExit("Version metadata is inconsistent. Align all version fields before running release automation.")
-
-          print(project_version)
-          PY
-          )
+          CURRENT_VERSION="$PROJECT_VERSION"
           echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
           echo "Current version: $CURRENT_VERSION"
 
@@ -116,19 +100,12 @@ jobs:
           
           bump-my-version bump "$BUMP" --message "chore: bump version to {new_version}"
           
-          NEW_VERSION=$(python - <<'PY'
-            import re
-            from pathlib import Path
+          NEW_VERSION=$(grep -m1 '^version = "' pyproject.toml | sed 's/^version = "\([^"]*\)"$/\1/')
 
-            pyproject_text = Path("pyproject.toml").read_text(encoding="utf-8")
-            match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject_text, re.MULTILINE)
-
-            if not match:
-              raise SystemExit("Could not parse project version from pyproject.toml")
-
-            print(match.group(1))
-          PY
-          )
+          if [ -z "$NEW_VERSION" ]; then
+            echo "Could not parse project version from pyproject.toml after bump."
+            exit 1
+          fi
 
           if [ "$NEW_VERSION" = "$CURRENT_VERSION" ]; then
             echo "Version bump did not change the project version."
