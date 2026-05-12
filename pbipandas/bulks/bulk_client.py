@@ -422,6 +422,33 @@ class BulkClient(BaseClient):
 
         return df_all_dependencies
 
+    def get_all_dataset_m_queries(self) -> pd.DataFrame:
+        """
+        Retrieve all M queries from all datasets.
+        Returns:
+            pd.DataFrame: A DataFrame containing M query metadata for all datasets.
+        """
+        # Create instances of the individual clients
+        dataset_client = DatasetClient(self.tenant_id, self.client_id, self.client_secret)
+
+        df_datasets = self.get_all_datasets()
+        df_all_m_queries = pd.DataFrame()
+
+        for _, dataset in df_datasets.iterrows():
+            try:
+                df = dataset_client.get_dataset_m_queries_by_id(dataset['workspaceId'], dataset['id'])
+                if not df.empty:
+                    df['datasetId'] = dataset['id']
+                    df['datasetName'] = dataset['name']
+                    df['workspaceId'] = dataset['workspaceId']
+                    df['workspaceName'] = dataset['workspaceName']
+                    df_all_m_queries = pd.concat([df_all_m_queries, df])
+            except Exception as e:
+                print(f"Error processing dataset M queries {dataset['id']}: {e}")
+                continue
+
+        return df_all_m_queries
+
     def get_all_datasets_refresh_schedule(self) -> pd.DataFrame:
         """
         Retrieve refresh schedules for all refreshable datasets.

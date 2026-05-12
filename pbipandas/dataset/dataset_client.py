@@ -294,3 +294,47 @@ class DatasetClient(BaseClient):
                 df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
             return df
         return pd.DataFrame()
+
+    def get_dataset_m_queries_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
+        """
+        Get dataset M queries by dataset id.
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            dataset_id (str): The ID of the Power BI dataset.
+        Returns:
+            pd.DataFrame: DataFrame containing the dataset M queries.
+        """
+        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
+        query_body = {
+            "queries": [{
+                "query": """EVALUATE
+VAR AllPartitions =
+    FILTER(
+        INFO.PARTITIONS(),
+        [TYPE] = 4
+    )
+VAR AllTables =
+    SELECTCOLUMNS(
+        INFO.TABLES(),
+        \"TableID\", [ID],
+        \"TableName\", [NAME]
+    )
+RETURN
+    SELECTCOLUMNS(
+        NATURALLEFTOUTERJOIN(
+            SELECTCOLUMNS(AllPartitions, \"TableID\", [TABLEID], \"M_Code\", [QUERYDEFINITION]),
+            AllTables
+        ),
+        \"Table Name\", [TableName],
+        \"M Expression\", [M_Code]
+    )"""
+            }],
+            "serializerSettings": {"includeNulls": True},
+        }
+        result = requests.post(url, headers=self.get_header(), json=query_body)
+        if result.status_code == 200:
+            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
+            if not df.empty:
+                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
+            return df
+        return pd.DataFrame()

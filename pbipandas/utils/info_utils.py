@@ -45,6 +45,7 @@ Schema & Metadata:
 • get_dataset_measures_by_id(workspace_id, dataset_id) - Get all measures in dataset
 • get_measures_for_datasets(workspace_id, dataset_id_list) - Get measures for multiple datasets in workspace
 • get_dataset_calc_dependencies_by_id(workspace_id, dataset_id) - Get calculation dependencies
+• get_dataset_m_queries_by_id(workspace_id, dataset_id) - Get dataset M queries
 
 Configuration:
 • update_dataset_parameters(workspace_id, dataset_id, parameters) - Update dataset parameters
@@ -70,6 +71,7 @@ Configuration:
 ────────────────────
 • get_report_by_id(workspace_id, report_id)           - Get report metadata
 • get_report_sources_by_id(workspace_id, report_id)   - Get report data sources
+• export_report_in_group(workspace_id, report_id, download_type, prefer_client_routing, output_file_path) - Export report file (PBIX/RDL)
 
 🌊 DATAFLOW OPERATIONS
 ──────────────────────
@@ -104,6 +106,7 @@ Schema Information:
 • get_all_dataset_measures()                          - All measures across all datasets
 • get_measures_for_dataset_ids_across_workspaces(dataset_id_list)   - Measures for specific dataset IDs across workspaces
 • get_all_dataset_calc_dependencies()                 - All calculation dependencies
+• get_all_dataset_m_queries()                         - All dataset M queries
 
 🛠️ UTILITY FUNCTIONS
 ────────────────────

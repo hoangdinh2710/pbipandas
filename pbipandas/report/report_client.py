@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+from pathlib import Path
 from ..auth import BaseClient
 from ..utils import extract_connection_details
 
@@ -58,3 +59,45 @@ class ReportClient(BaseClient):
                 df[["server", "database", "connectionString", "url", "path"]] = df["connectionDetails"].apply(extract_connection_details)
             return df
         return pd.DataFrame()
+
+    def export_report_in_group(
+        self,
+        workspace_id: str,
+        report_id: str,
+        download_type: str = "IncludeModel",
+        prefer_client_routing: bool = None,
+        output_file_path: str = None,
+    ) -> bytes:
+        """
+        Export the specified report from a workspace to a PBIX or RDL file.
+
+        Args:
+            workspace_id (str): The ID of the Power BI workspace.
+            report_id (str): The ID of the Power BI report.
+            download_type (str): Optional download type. Defaults to "IncludeModel".
+                Valid values: "LiveConnect", "IncludeModel".
+            prefer_client_routing (bool): Optional timeout workaround for large exports.
+            output_file_path (str): Optional path to save the exported file.
+
+        Returns:
+            bytes: Exported report file bytes when the request succeeds, otherwise empty bytes.
+        """
+        export_report_url = f"{self.base_url}/{workspace_id}/reports/{report_id}/Export"
+        params = {}
+
+        if download_type is not None:
+            params["downloadType"] = download_type
+
+        if prefer_client_routing is not None:
+            params["preferClientRouting"] = str(prefer_client_routing).lower()
+
+        result = requests.get(url=export_report_url, headers=self.get_header(), params=params)
+
+        if result.status_code == 200:
+            if output_file_path:
+                output_path = Path(output_file_path)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_bytes(result.content)
+            return result.content
+
+        return b""

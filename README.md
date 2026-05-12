@@ -72,6 +72,7 @@ refresh_history = client.get_dataset_refresh_history_by_id(workspace_id, dataset
 # Bulk operations across all workspaces
 all_sources = client.get_all_dataset_sources()
 all_tables = client.get_all_dataset_tables()
+all_m_queries = client.get_all_dataset_m_queries()
 
 # Get measures for specific datasets across all workspaces
 dataset_ids = ["dataset1", "dataset2", "dataset3"]
@@ -89,9 +90,11 @@ workspaces = workspace_client.get_all_workspaces()
 dataset_client = DatasetClient(tenant_id, client_id, client_secret)
 dataset_client.refresh_dataset(workspace_id, dataset_id)
 result = dataset_client.execute_query(workspace_id, dataset_id, "EVALUATE INFO.TABLES()")
+m_queries = dataset_client.get_dataset_m_queries_by_id(workspace_id, dataset_id)
 
 bulk_client = BulkClient(tenant_id, client_id, client_secret)
 all_datasets = bulk_client.get_all_datasets()
+all_m_queries = bulk_client.get_all_dataset_m_queries()
 ```
 
 ### 🔍 Option 3: Individual Operations
@@ -105,6 +108,7 @@ dataset_client = DatasetClient(tenant_id, client_id, client_secret)
 metadata = dataset_client.get_dataset_by_id(workspace_id, dataset_id)
 tables = dataset_client.get_dataset_tables_by_id(workspace_id, dataset_id)
 columns = dataset_client.get_dataset_columns_by_id(workspace_id, dataset_id)
+m_queries = dataset_client.get_dataset_m_queries_by_id(workspace_id, dataset_id)
 
 # Get measures for multiple datasets in workspace
 dataset_ids = ["dataset1", "dataset2", "dataset3"]
@@ -120,11 +124,11 @@ dataset_client.refresh_tables_from_dataset(workspace_id, dataset_id, ["Table1", 
 |--------|---------|---------------|
 | `PowerBIClient` | **All-in-one client** | Everything below combined |
 | `WorkspaceClient` | **Workspace operations** | `get_all_workspaces()`, `get_workspace_users_by_id()` |
-| `DatasetClient` | **Dataset operations** | `execute_query()`, `refresh_dataset()`, `get_dataset_*()`, `get_measures_for_datasets()` |
-| `ReportClient` | **Report operations** | `get_report_by_id()`, `get_report_sources_by_id()` |
+| `DatasetClient` | **Dataset operations** | `execute_query()`, `refresh_dataset()`, `get_dataset_*()`, `get_dataset_m_queries_by_id()`, `get_measures_for_datasets()` |
+| `ReportClient` | **Report operations** | `get_report_by_id()`, `get_report_sources_by_id()`, `export_report_in_group()` |
 | `DataflowClient` | **Dataflow operations** | `refresh_dataflow()`, `get_dataflow_*()` |
 | `GatewayClient` | **Gateway operations** | `get_all_gateways()`, `get_gateway_datasources()` |
-| `BulkClient` | **Bulk data retrieval** | `get_all_*()` functions |
+| `BulkClient` | **Bulk data retrieval** | `get_all_*()` functions including `get_all_dataset_m_queries()` |
 
 ## 🎯 Common Use Cases
 
@@ -177,6 +181,7 @@ result = client.execute_query(workspace_id, dataset_id, dax_query)
 all_tables = client.get_all_dataset_tables()
 all_columns = client.get_all_dataset_columns()
 all_measures = client.get_all_dataset_measures()
+all_m_queries = client.get_all_dataset_m_queries()
 
 # Create comprehensive data dictionary
 schema_doc = all_columns.merge(all_tables, on=['datasetId', 'tableName'])

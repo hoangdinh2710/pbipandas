@@ -29,3 +29,8 @@ tag = true
 filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
+
+[[tool.bump-my-version.files]]
+filename = "pbipandas/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
