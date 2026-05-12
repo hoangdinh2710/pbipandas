@@ -15,6 +15,7 @@ def info():
     """Display comprehensive information about all available PbiPandas functions."""
     print_client_info()
 
+
 __version__ = "1.0.2"
 __all__ = [
     'PowerBIClient',        # Convenience class with all functionality

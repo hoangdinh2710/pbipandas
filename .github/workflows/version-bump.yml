@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main  # Trigger on pushes to main
+    paths-ignore:
+      - pyproject.toml
+      - pbipandas/__init__.py
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Required for tags and history
+          ref: ${{ github.ref_name }}
           token: ${{ secrets.PAT_TOKEN || github.token }}
 
       - name: Set up Python
@@ -34,11 +39,41 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Get current version
+      - name: Validate version metadata
         id: current_version
         run: |
-          CURRENT_VERSION=$(bump-my-version show current_version)
-          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          CURRENT_VERSION=$(python - <<'PY'
+          import re
+          import tomllib
+          from pathlib import Path
+
+          with open("pyproject.toml", "rb") as handle:
+            data = tomllib.load(handle)
+
+          project_version = data["project"]["version"]
+          configured_version = data["tool"]["bump-my-version"]["current_version"]
+          init_text = Path("pbipandas/__init__.py").read_text(encoding="utf-8")
+          match = re.search(r'__version__\s*=\s*"([^"]+)"', init_text)
+
+          if not match:
+            raise SystemExit("Could not find __version__ in pbipandas/__init__.py")
+
+          package_version = match.group(1)
+          versions = {
+            "project.version": project_version,
+            "tool.bump-my-version.current_version": configured_version,
+            "pbipandas.__version__": package_version,
+          }
+
+          if len(set(versions.values())) != 1:
+            for name, value in versions.items():
+              print(f"{name}={value}")
+            raise SystemExit("Version metadata is inconsistent. Align all version fields before running release automation.")
+
+          print(project_version)
+          PY
+          )
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
           echo "Current version: $CURRENT_VERSION"
 
       - name: Determine bump type from commit messages
@@ -72,27 +107,34 @@ jobs:
       - name: Bump version
         id: bump_version
         run: |
+          CURRENT_VERSION="${{ steps.current_version.outputs.current_version }}"
           BUMP=${BUMP:-patch}
           echo "Bumping version ($BUMP)"
           
-          # Perform the version bump
-          bump-my-version bump $BUMP --message "chore: bump version to {new_version}"
+          bump-my-version bump "$BUMP" --message "chore: bump version to {new_version}"
           
-          # Get the new version
-          NEW_VERSION=$(bump-my-version show current_version)
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          NEW_VERSION=$(python - <<'PY'
+          import tomllib
+
+          with open("pyproject.toml", "rb") as handle:
+              data = tomllib.load(handle)
+
+          print(data["project"]["version"])
+          PY
+          )
+
+          if [ "$NEW_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "Version bump did not change the project version."
+            exit 1
+          fi
+
+          if ! git rev-parse "v$NEW_VERSION" >/dev/null 2>&1; then
+            echo "Expected tag v$NEW_VERSION was not created."
+            exit 1
+          fi
+
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "New version: $NEW_VERSION"
 
-      - name: Commit and push version bump
-        run: |
-          # Check if there are changes to commit
-          if git diff --quiet; then
-            echo "No changes detected, skipping commit."
-          else
-            # Commit the version bump
-            git add .
-            git commit -m "chore: bump version to ${{ steps.bump_version.outputs.new_version }}"
-          fi
-          
-          # Push the commit and any tags created by bump-my-version
-          git push origin main --follow-tags
+      - name: Push version bump commit and tag
+        run: git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags
