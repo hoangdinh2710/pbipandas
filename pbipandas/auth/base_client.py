@@ -4,8 +4,8 @@ import requests
 class BaseClient:
     """
     Base PowerBI Client Class for authentication and shared functionality.
-    
-    This class handles authentication and provides shared utilities for 
+
+    This class handles authentication and provides shared utilities for
     interacting with the Power BI REST API.
 
     Attributes:
@@ -76,5 +76,3 @@ class BaseClient:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token}",
         }
-
-

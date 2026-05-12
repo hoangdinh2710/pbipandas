@@ -7,7 +7,7 @@ from ..utils import extract_connection_details
 class DatasetClient(BaseClient):
     """
     Dataset-related operations for Power BI.
-    
+
     This class provides methods for managing datasets, including refresh operations,
     parameter updates, and retrieving dataset metadata.
     """
@@ -51,7 +51,7 @@ class DatasetClient(BaseClient):
             body (dict): Optional request body for partial refresh.
         """
         url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/refreshes"
-        
+
         result = requests.post(url, headers=self.get_header(), json=body)
 
         if result.status_code == 202:
@@ -111,7 +111,7 @@ class DatasetClient(BaseClient):
         }
         result = requests.post(url, headers=self.get_header(), json=body)
         return result
-    
+
     def get_dataset_refresh_schedule_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
         """
         Get dataset refresh schedule by dataset id.
@@ -121,7 +121,7 @@ class DatasetClient(BaseClient):
         Returns:
             pd.DataFrame: DataFrame containing the dataset refresh schedule.
         """
-    
+
         get_dataset_refresh_schedule_url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/refreshSchedule"
         result = requests.get(url=get_dataset_refresh_schedule_url, headers=self.get_header())
         if result.status_code == 200:
@@ -164,7 +164,7 @@ class DatasetClient(BaseClient):
             "serializerSettings": {"includeNulls": True},
         }
         result = requests.post(url, headers=self.get_header(), json=body)
-        
+
         if result.status_code == 200:
             df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
             if not df.empty:

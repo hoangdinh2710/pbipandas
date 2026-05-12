@@ -6,14 +6,14 @@ from ..auth import BaseClient
 class WorkspaceClient(BaseClient):
     """
     Workspace-related operations for Power BI.
-    
+
     This class provides methods for managing and retrieving information
     about Power BI workspaces.
     """
 
     def get_workspace_by_id(self, workspace_id: str) -> pd.DataFrame:
         """
-        Retrieve a specific Power BI workspace by its ID.   
+        Retrieve a specific Power BI workspace by its ID.
         Args:
             workspace_id (str): The ID of the Power BI workspace.
         Returns:
@@ -46,7 +46,7 @@ class WorkspaceClient(BaseClient):
             pd.DataFrame: A DataFrame containing metadata for all workspaces.
         """
         url = f"{self.base_url}"
-        result = requests.get(url=url, headers=self.get_header())   
+        result = requests.get(url=url, headers=self.get_header())
         if result.status_code == 200:
             df = pd.DataFrame(result.json()["value"])
             if not df.empty:

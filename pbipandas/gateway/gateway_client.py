@@ -113,7 +113,8 @@ class GatewayClient(BaseClient):
             return pd.DataFrame(result.json().get("value", []))
         return pd.DataFrame()
 
-    def bind_dataset_to_gateway(self, workspace_id: str, dataset_id: str, gateway_object_id: str, datasource_object_ids: List[str]) -> requests.Response:
+    def bind_dataset_to_gateway(self, workspace_id: str, dataset_id: str, gateway_object_id: str,
+                                datasource_object_ids: List[str]) -> requests.Response:
         """Bind a dataset to a gateway and associated data sources."""
         url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/Default.BindToGateway"
         payload = {

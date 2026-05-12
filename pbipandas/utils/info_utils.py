@@ -1,11 +1,11 @@
 def get_client_info():
     """
     Display comprehensive information about all available PbiPandas client functions.
-    
+
     Returns:
         str: Formatted information about all available methods grouped by functionality.
     """
-    
+
     info_text = """
 🔋 PbiPandas Client Information
 ═══════════════════════════════════════════════════════════════════════════════
