@@ -95,7 +95,7 @@ class BulkClient(BaseClient):
 
     def get_all_dataset_refresh_history(self) -> pd.DataFrame:
         """
-        Retrieve refresh history for all refreshable datasets.
+        Retrieve refresh history for all datasets.
         Returns:
             pd.DataFrame: A DataFrame containing refresh history for all datasets.
         """
@@ -105,9 +105,7 @@ class BulkClient(BaseClient):
         df_datasets = self.get_all_datasets()
         df_all_refresh_history = pd.DataFrame()
 
-        refreshable_datasets = df_datasets[df_datasets['isRefreshable']]
-
-        for _, dataset in refreshable_datasets.iterrows():
+        for _, dataset in df_datasets.iterrows():
             try:
                 df = dataset_client.get_dataset_refresh_history_by_id(dataset['workspaceId'], dataset['id'])
                 if not df.empty:
@@ -451,7 +449,7 @@ class BulkClient(BaseClient):
 
     def get_all_datasets_refresh_schedule(self) -> pd.DataFrame:
         """
-        Retrieve refresh schedules for all refreshable datasets.
+        Retrieve refresh schedules for all datasets.
         Returns:
             pd.DataFrame: A DataFrame containing refresh schedule details for all datasets.
         """
@@ -461,9 +459,7 @@ class BulkClient(BaseClient):
         df_datasets = self.get_all_datasets()
         df_all_schedules = pd.DataFrame()
 
-        refreshable_datasets = df_datasets[df_datasets['isRefreshable']]
-
-        for _, dataset in refreshable_datasets.iterrows():
+        for _, dataset in df_datasets.iterrows():
             try:
                 df = dataset_client.get_dataset_refresh_schedule_by_id(dataset['workspaceId'], dataset['id'])
                 if not df.empty:
