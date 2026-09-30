@@ -1,3 +1,6 @@
+import io
+
+import pyarrow as pa
 import requests
 import pandas as pd
 from ..auth import BaseClient
@@ -144,6 +147,58 @@ class DatasetClient(BaseClient):
             return pd.DataFrame(result.json()["value"])
         return pd.DataFrame()
 
+    def _execute_query_with_fallback(
+        self, workspace_id: str, dataset_id: str, query: str
+    ) -> pd.DataFrame:
+        legacy_url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/executeQueries"
+        legacy_body = {
+            "queries": [{"query": query}],
+            "serializerSettings": {"includeNulls": True},
+        }
+        legacy_result = requests.post(
+            legacy_url,
+            headers=self.get_header(),
+            json=legacy_body,
+        )
+        if legacy_result.status_code == 200:
+            try:
+                rows = legacy_result.json()["results"][0]["tables"][0].get("rows", [])
+            except (KeyError, TypeError, ValueError):
+                rows = []
+            if rows:
+                df = pd.DataFrame.from_dict(rows)
+                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
+                return df
+
+        dax_url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/executeDaxQueries"
+        dax_body = {
+            "query": query,
+            "queryTimeout": 600,
+            "schemaOnly": False,
+            "resultSetRowCountLimit": 1000000,
+        }
+        dax_headers = {
+            **self.get_header(),
+            "Accept": "application/vnd.apache.arrow.stream",
+        }
+        dax_result = requests.post(dax_url, headers=dax_headers, json=dax_body)
+        if dax_result.status_code == 200:
+            table = pa.ipc.open_stream(io.BytesIO(dax_result.content)).read_all()
+            metadata = {
+                key.decode(): value.decode()
+                for key, value in (table.schema.metadata or {}).items()
+            }
+            if metadata.get("IsError") == "true":
+                raise RuntimeError(
+                    f"Power BI DAX query failed: {metadata.get('FaultString', metadata)}"
+                )
+            df = table.to_pandas(strings_to_categorical=False)
+            if not df.empty:
+                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
+            return df
+
+        return pd.DataFrame()
+
     def execute_query(
         self, workspace_id: str, dataset_id: str, query: str
     ) -> pd.DataFrame:
@@ -158,20 +213,7 @@ class DatasetClient(BaseClient):
         Returns:
             pd.DataFrame: DataFrame containing the query results.
         """
-        url = f"{self.base_url}/{workspace_id}/datasets/{dataset_id}/executeQueries"
-        body = {
-            "queries": [{"query": query}],
-            "serializerSettings": {"includeNulls": True},
-        }
-        result = requests.post(url, headers=self.get_header(), json=body)
-
-        if result.status_code == 200:
-            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
-            if not df.empty:
-                # Clean up column names by removing square brackets
-                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
-            return df
-        return pd.DataFrame()
+        return self._execute_query_with_fallback(workspace_id, dataset_id, query)
 
     def get_dataset_sources_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
         """
@@ -215,18 +257,11 @@ class DatasetClient(BaseClient):
         Returns:
             pd.DataFrame: DataFrame containing the dataset tables metadata.
         """
-        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
-        query_body = {
-            "queries": [{"query": "EVALUATE INFO.VIEW.TABLES()"}],
-            "serializerSettings": {"includeNulls": True},
-        }
-        result = requests.post(url, headers=self.get_header(), json=query_body)
-        if result.status_code == 200:
-            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
-            if not df.empty:
-                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
-            return df
-        return pd.DataFrame()
+        return self._execute_query_with_fallback(
+            workspace_id,
+            dataset_id,
+            "EVALUATE INFO.VIEW.TABLES()",
+        )
 
     def get_dataset_columns_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
         """
@@ -237,18 +272,11 @@ class DatasetClient(BaseClient):
         Returns:
             pd.DataFrame: DataFrame containing the dataset columns metadata.
         """
-        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
-        query_body = {
-            "queries": [{"query": "EVALUATE INFO.VIEW.COLUMNS()"}],
-            "serializerSettings": {"includeNulls": True},
-        }
-        result = requests.post(url, headers=self.get_header(), json=query_body)
-        if result.status_code == 200:
-            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
-            if not df.empty:
-                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
-            return df
-        return pd.DataFrame()
+        return self._execute_query_with_fallback(
+            workspace_id,
+            dataset_id,
+            "EVALUATE INFO.VIEW.COLUMNS()",
+        )
 
     def get_dataset_measures_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
         """
@@ -259,19 +287,11 @@ class DatasetClient(BaseClient):
         Returns:
             pd.DataFrame: DataFrame containing the dataset measures metadata.
         """
-        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
-        query_body = {
-            "queries": [{"query": "EVALUATE INFO.VIEW.MEASURES()"}],
-            "serializerSettings": {"includeNulls": True},
-        }
-        result = requests.post(url, headers=self.get_header(), json=query_body)
-
-        if result.status_code == 200:
-            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
-            if not df.empty:
-                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
-            return df
-        return pd.DataFrame()
+        return self._execute_query_with_fallback(
+            workspace_id,
+            dataset_id,
+            "EVALUATE INFO.VIEW.MEASURES()",
+        )
 
     def get_dataset_calc_dependencies_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
         """
@@ -282,18 +302,11 @@ class DatasetClient(BaseClient):
         Returns:
             pd.DataFrame: DataFrame containing the dataset calculation dependencies.
         """
-        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
-        query_body = {
-            "queries": [{"query": "EVALUATE INFO.CALCDEPENDENCY()"}],
-            "serializerSettings": {"includeNulls": True},
-        }
-        result = requests.post(url, headers=self.get_header(), json=query_body)
-        if result.status_code == 200:
-            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
-            if not df.empty:
-                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
-            return df
-        return pd.DataFrame()
+        return self._execute_query_with_fallback(
+            workspace_id,
+            dataset_id,
+            "EVALUATE INFO.CALCDEPENDENCY()",
+        )
 
     def get_dataset_m_queries_by_id(self, workspace_id: str, dataset_id: str) -> pd.DataFrame:
         """
@@ -304,7 +317,6 @@ class DatasetClient(BaseClient):
         Returns:
             pd.DataFrame: DataFrame containing the dataset M queries.
         """
-        url = f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries"
         query_body = {
             "queries": [{
                 "query": """EVALUATE
@@ -331,10 +343,8 @@ RETURN
             }],
             "serializerSettings": {"includeNulls": True},
         }
-        result = requests.post(url, headers=self.get_header(), json=query_body)
-        if result.status_code == 200:
-            df = pd.DataFrame.from_dict(result.json()["results"][0]["tables"][0]["rows"])
-            if not df.empty:
-                df.columns = [col.replace('[', '').replace(']', '') for col in df.columns]
-            return df
-        return pd.DataFrame()
+        return self._execute_query_with_fallback(
+            workspace_id,
+            dataset_id,
+            query_body["queries"][0]["query"],
+        )
